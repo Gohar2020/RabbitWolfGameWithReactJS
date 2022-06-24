@@ -1,9 +1,6 @@
 import React, { useState } from "react"
 import ReactDOM from "react-dom"
 import "./style.css"
-import rabit from "./Images/rabbit.png"
-
-// import * as Globals from "./globalVars.js"
 
 const WOLF_MOVE_MIN_MILISEC = 2000
 const FREE_ID = 0
@@ -42,24 +39,21 @@ const setSizeOfGameGrid = (boardSize, gameBoardNum) => {
 }
 
 const createMultidimensionalArray = (boardSize) => {
-  // return Array(boardSize).fill(Array(boardSize).fill(FREE_ID))
-  const gameArray = []
-  for (let i = 0; i < boardSize; i++) {
-    gameArray[i] = []
-    for (let j = 0; j < boardSize; j++) {
-      gameArray[i][j] = FREE_ID
-    }
-  }
+  const gameArray = Array(boardSize)
+    .fill()
+    .map((_, indexH) =>
+      Array(boardSize)
+        .fill()
+        .map((_, indexW) => FREE_ID)
+    )
   return gameArray
 }
 
 const getRandomLocation = (gameArray) => {
-  const rawIndex = Math.floor(Math.random() * gameArray.length)
-  const colIndex = Math.floor(Math.random() * gameArray.length)
+  const i = Math.floor(Math.random() * gameArray.length)
+  const j = Math.floor(Math.random() * gameArray.length)
 
-  return gameArray[rawIndex][colIndex] === FREE_ID
-    ? [rawIndex, colIndex]
-    : getRandomLocation(gameArray)
+  return gameArray[i][j] === FREE_ID ? [i, j] : getRandomLocation(gameArray)
 }
 
 const setCharacterLocation = (gameArray, characterId) => {
@@ -79,33 +73,37 @@ const setAllPlayersLocation = (gameArray, boardSize) => {
   }
   return gameArray
 }
-function deleteAllChildElements(gameBoardNum) {
-  const board = getBoardDivElement(gameBoardNum, "board")
-  while (board.lastElementChild) {
-    board.removeChild(board.lastElementChild)
-  }
-}
-function getImage(character) {
-  // return <img src={IMAGES[character]} alt="" />
-  const player = document.createElement("img")
-  player.src = IMAGES[character]
-  return player
-}
 
-function createPlayGround(gameState) {
+const createPlayGround = (gameState) => {
   const gameArray = gameState.gameArray
   const gameBoardNum = gameState.gameBoardNum
-  deleteAllChildElements(gameBoardNum)
   const board = getBoardDivElement(gameBoardNum, "board")
+  const divList = gameArray.map((row, i) =>
+    row.map((col, j) => (
+      <div key={`${i}${j}`} data-demantion={`${i}${j}`}>
+        <img src={IMAGES[col]} alt="" />
+      </div>
+    ))
+  )
+  ReactDOM.render(divList, board)
+}
 
-  for (let i = 0; i < gameArray.length; i++) {
-    for (let j = 0; j < gameArray.length; j++) {
-      let div = document.createElement("div")
-      board.appendChild(div)
-      const cellValue = gameArray[i][j]
-      div.appendChild(getImage(cellValue))
-    }
-  }
+const createButtonElement = (name, id) => {
+  return (
+    <button className={name} id={name}>
+      {name.toUpperCase()}
+    </button>
+  )
+}
+
+function createMovementButtons(gameBoardNum) {
+  const movementdiv = getBoardDivElement(gameBoardNum, "movement")
+  const upBtn = createButtonElement("up", gameBoardNum)
+  const leftBtn = createButtonElement("left", gameBoardNum)
+  const rightBtn = createButtonElement("right", gameBoardNum)
+  const downBtn = createButtonElement("down", gameBoardNum)
+  const moveBtns = [upBtn, leftBtn, rightBtn, downBtn]
+  ReactDOM.render(moveBtns, movementdiv)
 }
 
 const startGameByNumber = (gameBoardNum) => {
@@ -114,6 +112,7 @@ const startGameByNumber = (gameBoardNum) => {
   setSizeOfGameGrid(boardSize, gameBoardNum)
   const primaryArray = createMultidimensionalArray(boardSize)
   const newGameArray = setAllPlayersLocation(primaryArray, boardSize)
+  console.log(newGameArray)
   const gameState = {
     gameArray: newGameArray,
     isGameRunning: true,
@@ -122,8 +121,9 @@ const startGameByNumber = (gameBoardNum) => {
   }
   GAME_STATES[gameBoardNum] = gameState
   createPlayGround(gameState)
-  console.log(newGameArray)
-  // getImage(FREE_ID)
+  createMovementButtons(gameState.gameBoardNum)
+  // console.log(newGameArray)
+  // // getImage(FREE_ID)
 }
 
 const CreateGameBody = (gameBoardNum) => {
@@ -159,15 +159,19 @@ const CreateGameBody = (gameBoardNum) => {
 }
 
 function App() {
-  let [gameBody, setgameBody] = useState("")
+  let arr = []
+  let [gameBody, setgameBody] = useState([])
 
   return (
     <div className="App">
       <div className="container" id="container">
         <button
           id="newGame"
-          onClick={(event) => {
-            setgameBody((gameBody = CreateGameBody(gameBoardNum)))
+          onClick={() => {
+            setgameBody([
+              ...gameBody,
+              (gameBody = CreateGameBody(gameBoardNum)),
+            ])
             gameBoardNum++
             console.log(gameBoardNum)
           }}
@@ -175,6 +179,7 @@ function App() {
           NEW GAME
         </button>
         {gameBody}
+
       </div>
     </div>
   )
